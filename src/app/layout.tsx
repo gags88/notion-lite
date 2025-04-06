@@ -11,19 +11,12 @@ export const metadata: Metadata = {
   description: 'Advanced notes app',
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession();
-
   return (
-    <html lang="en">
+    <html lang='en'>
       <body className={inter.className}>
-        <SessionProviderWrapper session={session}>
-          {children}
-        </SessionProviderWrapper>
+        <SessionProviderWrapper session={session}>{children}</SessionProviderWrapper>
       </body>
     </html>
   );

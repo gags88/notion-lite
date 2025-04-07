@@ -3,7 +3,7 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 
-export default function LoginButton() {
+export default function SocialLoginButton() {
   const { data: session, status } = useSession();
   const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {

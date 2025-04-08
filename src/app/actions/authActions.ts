@@ -14,14 +14,10 @@ async function credentialsLogin({ email, password }: { email: string; password: 
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      switch (error.type) {
-        case 'CredentialsSignin':
-          return { message: 'Invalid credentials' };
-        default:
-          return { message: 'Something went wrong.' };
-      }
+      return { message: error.cause?.err?.message || 'Invalid email or password.' };
     }
-    throw error;
+    return { message: 'Something went wrong.' };
+    // throw error;
   }
 }
 

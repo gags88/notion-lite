@@ -5,6 +5,7 @@ import Google from 'next-auth/providers/google';
 import { signInSchema } from '@/lib/zod';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { Role } from '@prisma/client';
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
@@ -24,12 +25,18 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({
           where: { email },
         });
-        if (!user || !user.password) {
-          return null;
+        if (!user) {
+          throw new Error('Invalid email or password.');
+        }
+        if (user.authProvider && user.authProvider !== 'credentials') {
+          throw new Error(`This email is linked with ${user.authProvider}. Please sign in using that method.`);
+        }
+        if (!user.password) {
+          throw new Error('Invalid email or password.');
         }
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
-          return null;
+          throw new Error('Invalid email or password.');
         }
         return {
           id: user.id,
@@ -56,6 +63,32 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     //   }
     //   return !!auth;
     // },
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'credentials') {
+        return true;
+      }
+      try {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+        });
+        if (!existingUser) {
+          await prisma.user.create({
+            data: {
+              email: user.email!,
+              name: user.name ?? profile?.name ?? '',
+              avatarUrl: user.image ?? profile?.picture ?? null,
+              authProvider: account?.provider, // 'github' or 'google'
+              emailVerified: account?.provider === 'google' || account?.provider === 'github' ? new Date() : null,
+              role: Role.USER,
+            },
+          });
+        }
+        return true;
+      } catch (err) {
+        console.error('Error syncing social login user:', err);
+        return false;
+      }
+    },
     jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id as string;

@@ -11,9 +11,14 @@ export default async function Navbar() {
         Notion Lite
       </Link>
       {!session ? (
-        <Link href='/auth/signin'>
-          <Button variant='default'>Sign In</Button>
-        </Link>
+        <div className='flex'>
+          <Link href='/auth/signin' className='mr-2'>
+            <Button variant='default'>Sign In</Button>
+          </Link>
+          <Link href='/auth/register'>
+            <Button variant='ghost'>Register</Button>
+          </Link>
+        </div>
       ) : (
         <form action={handleSignOut}>
           <Button variant='default' type='submit'>

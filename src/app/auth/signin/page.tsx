@@ -16,8 +16,10 @@ import { handleCredentialsSignin, handleGithubSignin, handleGoogleSignin } from 
 import { useState } from 'react';
 import ErrorMessage from '@/components/ErrorMessage';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 export default function SignIn() {
+  const router = useRouter();
   const [globalError, setGlobalError] = useState<string>('');
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -26,23 +28,23 @@ export default function SignIn() {
       password: '',
     },
   });
-
   const onSubmit = async (values: z.infer<typeof signInSchema>) => {
     try {
       const result = await handleCredentialsSignin(values);
       if (result?.message) {
         setGlobalError(result.message);
+        return;
       }
+      router.push('/');
     } catch (error) {
       console.log('An unexpected error occurred. Please try again.', error);
     }
   };
-
   return (
     <div className='flex items-center justify-center min-h-screen p-4'>
       <Card className='w-full max-w-md'>
         <CardHeader>
-          <CardTitle className='text-3xl font-bold text-center text-gray-800'>Authentication</CardTitle>
+          <CardTitle className='text-3xl font-bold text-center text-gray-800'>Sign In</CardTitle>
         </CardHeader>
         <CardContent>
           {globalError && <ErrorMessage error={globalError} />}

@@ -2,25 +2,47 @@
 
 import { signIn, signOut } from '@/auth';
 import { AuthError } from 'next-auth';
+import bcrypt from 'bcryptjs';
+import prisma from '@/lib/prisma';
 
-export async function handleCredentialsSignin({ email, password }: { email: string; password: string }) {
+async function credentialsLogin({ email, password }: { email: string; password: string }) {
   try {
-    await signIn('credentials', { email, password, redirectTo: '/' });
+    await signIn('credentials', {
+      email,
+      password,
+      redirect: false,
+    });
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case 'CredentialsSignin':
-          return {
-            message: 'Invalid credentials',
-          };
+          return { message: 'Invalid credentials' };
         default:
-          return {
-            message: 'Something went wrong.',
-          };
+          return { message: 'Something went wrong.' };
       }
     }
     throw error;
   }
+}
+
+export async function handleCredentialsSignin({ email, password }: { email: string; password: string }) {
+  return credentialsLogin({ email, password });
+}
+
+export async function handleRegister({ name, email, password }: { name: string; email: string; password: string }) {
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+  if (existingUser) {
+    return { message: 'Email already registered.' };
+  }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await prisma.user.create({
+    data: {
+      name,
+      email,
+      password: hashedPassword,
+    },
+  });
+  return credentialsLogin({ email, password });
 }
 
 export async function handleGithubSignin() {
